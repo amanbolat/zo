@@ -1,0 +1,2 @@
+ENGINE="mysql://pokedex:pokedex@localhost/pokedex"
+DB="$ENGINE?parseTime=true&sql_mode=ansi"
