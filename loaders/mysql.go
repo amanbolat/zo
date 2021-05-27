@@ -1,7 +1,6 @@
 package loaders
 
 import (
-	"fmt"
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -91,8 +90,13 @@ switchDT:
 			nilVal = "false"
 			typ = "bool"
 			if nullable {
-				nilVal = "sql.NullBool{}"
-				typ = "sql.NullBool"
+				if args.UseNil {
+					nilVal = "nil"
+					typ = "*bool"
+				} else {
+					nilVal = "sql.NullBool{}"
+					typ = "sql.NullBool"
+				}
 			}
 			break switchDT
 		} else if precision <= 8 {
@@ -105,24 +109,39 @@ switchDT:
 			typ = "uint64"
 		}
 		if nullable {
-			nilVal = "sql.NullInt64{}"
-			typ = "sql.NullInt64"
+			if args.UseNil {
+				nilVal = "nil"
+				typ = "*" + typ
+			} else {
+				nilVal = "sql.NullInt64{}"
+				typ = "sql.NullInt64"
+			}
 		}
 
 	case "bool", "boolean":
 		nilVal = "false"
 		typ = "bool"
 		if nullable {
-			nilVal = "sql.NullBool{}"
-			typ = "sql.NullBool"
+			if args.UseNil {
+				nilVal = "nil"
+				typ = "*bool"
+			} else {
+				nilVal = "nil"
+				typ = "*bool"
+			}
 		}
 
 	case "char", "varchar", "tinytext", "text", "mediumtext", "longtext":
 		nilVal = `""`
 		typ = "string"
 		if nullable {
-			nilVal = "sql.NullString{}"
-			typ = "sql.NullString"
+			if args.UseNil {
+				nilVal = "nil"
+				typ = "*string"
+			} else {
+				nilVal = "sql.NullString{}"
+				typ = "sql.NullString"
+			}
 		}
 
 	case "tinyint":
@@ -131,56 +150,91 @@ switchDT:
 			nilVal = "false"
 			typ = "bool"
 			if nullable {
-				nilVal = "sql.NullBool{}"
-				typ = "sql.NullBool"
+				if args.UseNil {
+					nilVal = "nil"
+					typ = "*bool"
+				} else {
+					nilVal = "sql.NullBool{}"
+					typ = "sql.NullBool"
+				}
 			}
 			break
 		}
 		nilVal = "0"
 		typ = "int8"
 		if nullable {
-			nilVal = "sql.NullInt64{}"
-			typ = "sql.NullInt64"
+			if args.UseNil {
+				nilVal = "nil"
+				typ = "*int8"
+			} else {
+				nilVal = "sql.NullInt64{}"
+				typ = "sql.NullInt64"
+			}
 		}
 
 	case "smallint":
 		nilVal = "0"
 		typ = "int16"
 		if nullable {
-			nilVal = "sql.NullInt64{}"
-			typ = "sql.NullInt64"
+			if args.UseNil {
+				nilVal = "nil"
+				typ = "*int16"
+			} else {
+				nilVal = "sql.NullInt64{}"
+				typ = "sql.NullInt64"
+			}
 		}
 
 	case "mediumint", "int", "integer":
 		nilVal = "0"
 		typ = args.Int32Type
 		if nullable {
-			nilVal = "sql.NullInt64{}"
-			typ = "sql.NullInt64"
+			if args.UseNil {
+				nilVal = "nil"
+				typ = "*" + typ
+			} else {
+				nilVal = "sql.NullInt64{}"
+				typ = "sql.NullInt64"
+			}
 		}
 
 	case "bigint":
 		nilVal = "0"
 		typ = "int64"
 		if nullable {
-			nilVal = "sql.NullInt64{}"
-			typ = "sql.NullInt64"
+			if args.UseNil {
+				nilVal = "nil"
+				typ = "*int64"
+			} else {
+				nilVal = "sql.NullInt64{}"
+				typ = "sql.NullInt64"
+			}
 		}
 
 	case "float":
 		nilVal = "0.0"
 		typ = "float32"
 		if nullable {
-			nilVal = "sql.NullFloat64{}"
-			typ = "sql.NullFloat64"
+			if args.UseNil {
+				nilVal = "nil"
+				typ = "*float32"
+			} else {
+				nilVal = "sql.NullFloat64{}"
+				typ = "sql.NullFloat64"
+			}
 		}
 
 	case "decimal", "double":
 		nilVal = "0.0"
 		typ = "float64"
 		if nullable {
-			nilVal = "sql.NullFloat64{}"
-			typ = "sql.NullFloat64"
+			if args.UseNil {
+				nilVal = "nil"
+				typ = "*float64"
+			} else {
+				nilVal = "sql.NullFloat64{}"
+				typ = "sql.NullFloat64"
+			}
 		}
 
 	case "binary", "varbinary", "tinyblob", "blob", "mediumblob", "longblob":
@@ -190,8 +244,13 @@ switchDT:
 		nilVal = "time.Time{}"
 		typ = "time.Time"
 		if nullable {
-			nilVal = "mysql.NullTime{}"
-			typ = "mysql.NullTime"
+			if args.UseNil {
+				nilVal = "nil"
+				typ = "*time.Time"
+			} else {
+				nilVal = "mysql.NullTime{}"
+				typ = "mysql.NullTime"
+			}
 		}
 
 	case "time":
@@ -255,11 +314,7 @@ func MyTables(db models.XODB, schema string, relkind string) ([]*models.Table, e
 	autoIncrements, err := models.MyAutoIncrements(db, schema)
 	if err != nil {
 		// Set it to an empty set on error.
-		fmt.Println("failed get auto increments")
 		autoIncrements = []*models.MyAutoIncrement{}
-	}
-	for _, i := range autoIncrements {
-		fmt.Println("Auto increment table:", i.TableName)
 	}
 
 	// Add information about manual FK.

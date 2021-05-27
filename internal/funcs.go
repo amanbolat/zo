@@ -22,6 +22,7 @@ func (a *ArgType) NewTemplateFuncs() template.FuncMap {
 		"colprefixnames":      a.colprefixnames,
 		"colvals":             a.colvals,
 		"colvalsmulti":        a.colvalsmulti,
+		"updatefieldnames":    a.updatefieldnames,
 		"fieldnames":          a.fieldnames,
 		"fieldnamesmulti":     a.fieldnamesmulti,
 		"goparamlist":         a.goparamlist,
@@ -258,7 +259,7 @@ func (a *ArgType) colnamesquery(fields []*Field, sep string, ignoreNames ...stri
 //
 // Used to create a list of column names in an UPDATE clause (ie, "field = $1, field =
 // $2, ...").
-func (a *ArgType) colnamesupdatequery(fields []*Field, sep string, forUpdate bool, ignoreNames ...string) string {
+func (a *ArgType) colnamesupdatequery(fields []*Field, sep string, ignoreNames ...string) string {
 	ignore := map[string]bool{}
 	for _, n := range ignoreNames {
 		ignore[n] = true
@@ -271,7 +272,7 @@ func (a *ArgType) colnamesupdatequery(fields []*Field, sep string, forUpdate boo
 			continue
 		}
 
-		if forUpdate && f.IsIgnoredOnUpdate {
+		if f.IsIgnoredOnUpdate {
 			continue
 		}
 
@@ -419,6 +420,38 @@ func (a *ArgType) fieldnames(fields []*Field, prefix string, ignoreNames ...stri
 	i := 0
 	for _, f := range fields {
 		if ignore[f.Name] {
+			continue
+		}
+
+		if i != 0 {
+			str = str + ", "
+		}
+		str = str + prefix + "." + f.Name
+		i++
+	}
+
+	return str
+}
+
+// updatefieldnames creates a list of field names from fields of the adding the
+// provided prefix, and excluding any Field with Name contained in ignoreNames.
+//
+// Used to present a comma separated list of field names, ie in a Go statement
+// (ie, "t.Field1, t.Field2, t.Field3 ...")
+func (a *ArgType) updatefieldnames(fields []*Field, prefix string, ignoreNames ...string) string {
+	ignore := map[string]bool{}
+	for _, n := range ignoreNames {
+		ignore[n] = true
+	}
+
+	str := ""
+	i := 0
+	for _, f := range fields {
+		if ignore[f.Name] {
+			continue
+		}
+
+		if f.IsIgnoredOnUpdate {
 			continue
 		}
 

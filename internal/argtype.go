@@ -125,6 +125,9 @@ type ArgType struct {
 	// Tags is the list of build tags to add to generated Go files.
 	Tags string `arg:"--tags,help:build tags to add to package header"`
 
+	// UseNil
+	UseNil bool `arg:"--use-nil,help:use nil for types instead of sql.Null"`
+
 	// Path is the output path, as derived from Out.
 	Path string `arg:"-"`
 
