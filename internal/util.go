@@ -155,9 +155,11 @@ func fmtIndexName(ixName string, tableName string) string {
 	return snaker.SnakeToCamelIdentifier(ixName)
 }
 
-// BuildIndexFuncName builds the index func name for an index and its supplied
-// fields.
-func (a *ArgType) BuildIndexFuncName(ixTpl *Index) {
+// BuildIndexFuncNames builds the index func names for an index and its supplied
+// fields. One fun for selecting by the index and another one to update using
+// the index name.
+func (a *ArgType) BuildIndexFuncNames(ixTpl *Index) {
+	updateFuncName := "UpdateBy"
 	// build func name
 	funcName := ixTpl.Type.Name
 	if !ixTpl.Index.IsUnique {
@@ -178,7 +180,9 @@ func (a *ArgType) BuildIndexFuncName(ixTpl *Index) {
 	}
 
 	// store resulting name back
+	ixTpl.UpdateFuncName = updateFuncName + strings.Join(paramNames, "")
 	ixTpl.FuncName = funcName + strings.Join(paramNames, "")
+	ixTpl.ParamNames = strings.Join(paramNames, "")
 }
 
 // letters for GenRandomID

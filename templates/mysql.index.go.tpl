@@ -13,7 +13,6 @@ const sqlstr = `SELECT ` +
 `WHERE {{ colnamesquery .Fields " AND " }}`
 
 // run query
-XOLog(sqlstr{{ goparamlist .Fields true false }})
 {{- if .Index.IsUnique }}
 	{{ $short }} := {{ .Type.Name }}{}
 
@@ -48,3 +47,18 @@ XOLog(sqlstr{{ goparamlist .Fields true false }})
 {{- end }}
 }
 
+{{- if and .Index.IsUnique (not .Index.IsPrimary) }}
+{{ if ne (fieldnamesmulti .Type.Fields $short .Type.PrimaryKeyFields) "" }}
+	// {{ .UpdateFuncName }} updates the {{ .Type.Name }} in the database.
+	func({{ $short }} *{{ .Type.Name }}) {{ .UpdateFuncName }}(ctx context.Context, db DbConn) (err error) {
+		const sqlstr = `UPDATE {{ $table }} SET ` +
+		`{{ colnamesupdatequery .Type.Fields ", " .Type.PrimaryKey.Name .FieldNamesArray }}` +
+		` WHERE {{ .Index.IndexName }} = ?`
+
+		_, err = db.ExecContext(ctx, sqlstr, {{ updatefieldnames .Type.Fields $short .Type.PrimaryKey.Name .FieldNamesArray }}, {{ $short }}.{{ .ParamNames }})
+		return err
+	}
+{{ else }}
+	// Update statements omitted due to lack of fields other than primary key
+{{ end }}
+{{- end }}

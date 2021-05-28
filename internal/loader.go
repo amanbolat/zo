@@ -709,7 +709,7 @@ func (tl TypeLoader) LoadTableIndexes(args *ArgType, typeTpl *Type, ixMap map[st
 		}
 
 		// build func name
-		args.BuildIndexFuncName(ixTpl)
+		args.BuildIndexFuncNames(ixTpl)
 
 		ixMap[typeTpl.Table.TableName+"_"+ix.IndexName] = ixTpl
 	}

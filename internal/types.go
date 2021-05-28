@@ -1,6 +1,9 @@
 package internal
 
-import "github.com/amanbolat/zo/models"
+import (
+	"github.com/amanbolat/zo/models"
+	"strings"
+)
 
 // TemplateType represents a template type.
 type TemplateType uint
@@ -144,12 +147,24 @@ type ForeignKey struct {
 
 // Index is a template item for a index into a table.
 type Index struct {
-	FuncName string
-	Schema   string
-	Type     *Type
-	Fields   []*Field
-	Index    *models.Index
-	Comment  string
+	FuncName       string
+	UpdateFuncName string
+	ParamNames     string
+	Schema         string
+	Type           *Type
+	Fields         []*Field
+	Index          *models.Index
+	Comment        string
+}
+
+// FieldNamesArray returns fields names as one string separated
+// by space. Used only in templates.
+func (i *Index) FieldNamesArray() string {
+	arr := make([]string, len(i.Fields))
+	for i, f := range i.Fields {
+		arr[i] = f.Name
+	}
+	return strings.Join(arr, " ")
 }
 
 // QueryParam is a query parameter for a custom query.
