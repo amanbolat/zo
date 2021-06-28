@@ -1,8 +1,12 @@
 {{- $short := (shortname .Name "err" "res" "sqlstr" "db" "XOLog") -}}
 {{- $table := (schema .Schema .Table.TableName) -}}
+
+const TblName_{{ .Schema }}{{ .Table.TableName }} = "{{ $table }}"
+
+
 {{- if .Comment -}}
 	// {{ .Comment }}
-{{- else -}}
+{{ else }}
 	// {{ .Name }} represents a row from '{{ $table }}'.
 {{- end }}
 type {{ .Name }} struct {

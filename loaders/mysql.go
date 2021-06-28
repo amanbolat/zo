@@ -201,10 +201,13 @@ switchDT:
 	case "bigint":
 		nilVal = "0"
 		typ = "int64"
+		if unsigned {
+			typ = "uint64"
+		}
 		if nullable {
 			if args.UseNil {
 				nilVal = "nil"
-				typ = "*int64"
+				typ = "*" + typ
 			} else {
 				nilVal = "sql.NullInt64{}"
 				typ = "sql.NullInt64"

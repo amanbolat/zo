@@ -24,8 +24,8 @@ driver.Valuer
 // StringSlice is a slice of strings.
 type StringSlice []string
 
-// JSON is a builtin JSON type for PostgreSQL and MySQL
-type JSON map[string]interface{}
+// JSON is a builtin JSON type for MySQL
+type JSON string
 
 // quoteEscapeRegex is the regex to match escaped characters in a string.
 var quoteEscapeRegex = regexp.MustCompile(`([^\\]([\\]{2})*)\\"`)
