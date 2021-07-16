@@ -7,9 +7,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"golang.org/x/tools/imports"
 	"io/ioutil"
+	"log"
 	"os"
-	"os/exec"
 	"path"
 	"sort"
 	"strings"
@@ -48,15 +49,13 @@ func main() {
 	// process args
 	err = processArgs(args)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("failed to process args: %v", err)
 	}
 
 	// open database
 	err = openDB(args)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("failed to open DB: %v", err)
 	}
 	defer args.DB.Close()
 
@@ -64,8 +63,7 @@ func main() {
 	if args.Schema == "" {
 		args.Schema, err = args.Loader.SchemaName(args)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error: %v\n", err)
-			os.Exit(1)
+			log.Fatalf("failed to load schema: %v", err)
 		}
 	}
 
@@ -76,22 +74,19 @@ func main() {
 		err = args.Loader.LoadSchema(args)
 	}
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("failed to load defs into type map: %v", err)
 	}
 
 	// add xo
 	err = args.ExecuteTemplate(internal.XOTemplate, "xo_db", "", args)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("failed to execute template: %v", err)
 	}
 
 	// output
 	err = writeTypes(args)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("failed to write types: %v", err)
 	}
 }
 
@@ -355,10 +350,28 @@ func writeTypes(args *internal.ArgType) error {
 	}
 
 	// process written files with goimports
-	output, err := exec.Command("goimports", params...).CombinedOutput()
-	if err != nil {
-		return errors.New(string(output))
+
+	for _, f := range files {
+		buf, err := ioutil.ReadFile(f.Name())
+		if err != nil {
+			log.Fatalf("failed to read file [%v]: %v", f.Name(), err)
+		}
+
+		b, err := imports.Process(f.Name(), buf, nil)
+		if err != nil {
+			log.Fatalf("failed to exec go imports against the file [%v]: %v", f.Name(), err)
+		}
+
+		err = ioutil.WriteFile(f.Name(), b, 0600)
+		if err != nil {
+			log.Fatalf("failed to write to the file [%v]: %v", f.Name(), err)
+		}
 	}
+
+	// output, err := exec.Command("goimports", params...).CombinedOutput()
+	// if err != nil {
+	// 	return fmt.Errorf("failed to exec goimports: [%v]; [%v]", err, output)
+	// }
 
 	return nil
 }
