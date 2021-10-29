@@ -1,5 +1,7 @@
-{{- $short := (shortname .Type.Name "err" "sqlstr" "db" "q" "res" "XOLog" .QueryParams) -}}
+{{- $short := (shortname .Type.Name "err" "sqlstr" "db" "q" "res" .QueryParams) -}}
 {{- $queryComments := .QueryComments -}}
+
+
 {{- if .Comment -}}
 	// {{ .Comment }}
 {{- else -}}
@@ -13,7 +15,6 @@ var err error
 {{end -}}`{{ $l }}`{{ end }}
 
 // run query
-XOLog(sqlstr{{ range .QueryParams }}{{ if not .Interpolate }}, {{ .Name }}{{ end }}{{ end }})
 {{- if .OnlyOne }}
 	var {{ $short }} {{ .Type.Name }}
 	err = db.QueryRow(sqlstr{{ range .QueryParams }}, {{ .Name }}{{ end }}).Scan({{ fieldnames .Type.Fields (print "&" $short) }})

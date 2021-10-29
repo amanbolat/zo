@@ -11,9 +11,6 @@ Query(string, ...interface{}) (*sql.Rows, error)
 QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 }
 
-// XOLog provides the log func used by generated queries.
-var XOLog = func(string, ...interface{}) { }
-
 // ScannerValuer is the common interface for types that implement both the
 // database/sql.Scanner and sql/driver.Valuer interfaces.
 type ScannerValuer interface {

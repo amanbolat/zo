@@ -1,4 +1,4 @@
-{{- $short := (shortname .Name "err" "res" "sqlstr" "db" "XOLog") -}}
+{{- $short := (shortname .Name "err" "res" "sqlstr" "db") -}}
 {{- $table := (schema .Schema .Table.TableName) -}}
 
 const TblName_{{ .Schema }}{{ .Table.TableName }} = "{{ $table }}"
@@ -13,6 +13,27 @@ type {{ .Name }} struct {
 {{- range .Fields }}
 	{{ .Name }} {{ retype .Type }} `json:"{{ .Col.ColumnName }}"` // {{ .Col.ColumnName }}
 {{- end }}
+}
+
+// {{ .Name }}ColsAll is an array of all "{{ .Name }}" fields
+var {{ .Name }}ColsAll = []string{ {{ colnamessliceall .Fields }} }
+
+// {{ .Name }}ColsForUpdate is an array of "{{ .Name }}" fields without primaryKey field.
+var {{ .Name }}ColsForUpdate = []string{ {{ colnamessliceforupdate .Fields .PrimaryKey.Name }} }
+
+// {{ .Name }}ColsForUpdate is an array of "{{ .Name }}" fields without primaryKey field.
+var {{ .Name }}ColsForInsert = []string{ {{ colnamessliceforinsert .Fields .PrimaryKey.Name }} }
+
+// UpdateValues returns all the fields values to be used
+// for SQL inserts. Pass as "item.UpdateValues()..." with three dots
+func ({{ $short }} *{{ .Name }}) UpdateValues() []interface{} {
+	return []interface{{"{}"}}{{"{"}} {{ updatefieldnames .Fields $short .PrimaryKey.Name }} {{"}"}}
+}
+
+// InsertValues returns all the fields values to be used
+// for SQL inserts. Pass as "item.InsertValues()..." with three dots
+func ({{ $short }} *{{ .Name }}) InsertValues() []interface{} {
+	return []interface{{"{}"}}{{"{"}} {{ fieldnames .Fields $short .PrimaryKey.Name }} {{"}"}}
 }
 
 {{ if .PrimaryKey }}
@@ -30,7 +51,6 @@ type {{ .Name }} struct {
 		`)`
 
 		// run query
-		XOLog(sqlstr, {{ fieldnames .Fields $short }})
 		_, err = db.ExecContext(ctx, sqlstr, {{ fieldnames .Fields $short }})
 		if err != nil {
 		return err
@@ -45,7 +65,6 @@ type {{ .Name }} struct {
 		`)`
 
 		// run query
-		XOLog(sqlstr, {{ fieldnames .Fields $short .PrimaryKey.Name }})
 		res, err := db.ExecContext(ctx, sqlstr, {{ fieldnames .Fields $short .PrimaryKey.Name }})
 		if err != nil {
 		return err
@@ -76,7 +95,6 @@ type {{ .Name }} struct {
 			` WHERE {{ colnamesquery .PrimaryKeyFields " AND " }}`
 
 			// run query
-			XOLog(sqlstr, {{ fieldnamesmulti .Fields $short .PrimaryKeyFields }}, {{ fieldnames .PrimaryKeyFields $short}})
 			_, err = db.ExecContext(ctx, sqlstr, {{ fieldnamesmulti .Fields $short .PrimaryKeyFields }}, {{ fieldnames .PrimaryKeyFields $short}})
 			return err
 		{{- else }}
@@ -103,7 +121,6 @@ type {{ .Name }} struct {
 		const sqlstr = `DELETE FROM {{ $table }} WHERE {{ colnamesquery .PrimaryKeyFields " AND " }}`
 
 		// run query
-		XOLog(sqlstr, {{ fieldnames .PrimaryKeyFields $short }})
 		_, err = db.ExecContext(ctx, sqlstr, {{ fieldnames .PrimaryKeyFields $short }})
 		if err != nil {
 		return err
@@ -113,7 +130,6 @@ type {{ .Name }} struct {
 		const sqlstr = `DELETE FROM {{ $table }} WHERE {{ colname .PrimaryKey.Col }} = ?`
 
 		// run query
-		XOLog(sqlstr, {{ $short }}.{{ .PrimaryKey.Name }})
 		_, err = db.ExecContext(ctx, sqlstr, {{ $short }}.{{ .PrimaryKey.Name }})
 		if err != nil {
 		return err
