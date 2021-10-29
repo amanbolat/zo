@@ -508,6 +508,31 @@ func (tl TypeLoader) LoadColumns(args *ArgType, typeTpl *Type) error {
 		return err
 	}
 
+	// parse args.IgnoreFieldsOnUpdate from table_name[col1_name,col2_name]
+	// to a map[table_name]map[col_name]isIgnored.
+	//
+	// if table name is '*' then this field will be ignored for all tables.
+	ignoreOnUpdateFieldMap := make(map[string]map[string]bool)
+	for _, s := range args.IgnoreFieldsOnUpdate {
+		leftBracketIdx := strings.IndexRune(s, '[')
+		rightBracketIdx := strings.IndexRune(s, ']')
+		if leftBracketIdx == -1 || rightBracketIdx == -1 {
+			fmt.Println("wrong --ignore-fields-on-update arg: ", s)
+			continue
+		}
+
+		tableName := strings.TrimSpace(strings.SplitN(s, "[", 2)[0])
+		cols := strings.Split(s[leftBracketIdx+1:rightBracketIdx], ",")
+		for i, col := range cols {
+			cols[i] = strings.TrimSpace(col)
+		}
+
+		ignoreOnUpdateFieldMap[tableName] = make(map[string]bool)
+		for _, col := range cols {
+			ignoreOnUpdateFieldMap[tableName][col] = true
+		}
+	}
+
 	// process columns
 	for _, c := range columnList {
 		ignore := false
@@ -534,9 +559,18 @@ func (tl TypeLoader) LoadColumns(args *ArgType, typeTpl *Type) error {
 			Col:  c,
 		}
 		f.Len, f.NilType, f.Type = tl.ParseType(args, c.DataType, !c.NotNull)
-		for _, ignoreField := range args.IgnoreFieldsOnUpdate {
-			if snaker.SnakeToCamelIdentifier(ignoreField) == f.Name {
-				 f.IsIgnoredOnUpdate = true
+
+		if colMap, ok := ignoreOnUpdateFieldMap[typeTpl.Table.TableName]; ok {
+			if colMap[snaker.CamelToSnakeIdentifier(f.Name)] {
+				f.IsIgnoredOnUpdate = true
+				fmt.Printf("Field [%s] on [%s] table ignored for updates\n", f.Name, typeTpl.Table.TableName)
+			}
+		}
+
+		if colMap, ok := ignoreOnUpdateFieldMap["*"]; ok {
+			if colMap[snaker.CamelToSnakeIdentifier(f.Name)] {
+				f.IsIgnoredOnUpdate = true
+				fmt.Printf("Field [%s] on [%s] table ignored for updates\n", f.Name, typeTpl.Table.TableName)
 			}
 		}
 
