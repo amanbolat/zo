@@ -26,7 +26,7 @@ var {{ .Name }}ColsForInsert = []string{ {{ colnamessliceforinsert .Fields .Prim
 
 // AllValues returns all the fields values to be used
 // for SQL inserts. Pass as "item.InsertValues()..." with three dots
-func ({{ $short }} *{{ .Name }}) InsertValues() []interface{} {
+func ({{ $short }} *{{ .Name }}) AllValues() []interface{} {
 	return []interface{}{ {{ fieldnames .Fields $short }} }
 }
 
