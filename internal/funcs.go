@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"text/template"
@@ -13,28 +14,31 @@ import (
 // NewTemplateFuncs returns a set of template funcs bound to the supplied args.
 func (a *ArgType) NewTemplateFuncs() template.FuncMap {
 	return template.FuncMap{
-		"colcount":            a.colcount,
-		"colnames":            a.colnames,
-		"colnamesmulti":       a.colnamesmulti,
-		"colnamesquery":       a.colnamesquery,
-		"colnamesquerymulti":  a.colnamesquerymulti,
-		"colnamesupdatequery": a.colnamesupdatequery,
-		"colprefixnames":      a.colprefixnames,
-		"colvals":             a.colvals,
-		"colvalsmulti":        a.colvalsmulti,
-		"updatefieldnames":    a.updatefieldnames,
-		"fieldnames":          a.fieldnames,
-		"fieldnamesmulti":     a.fieldnamesmulti,
-		"goparamlist":         a.goparamlist,
-		"reniltype":           a.reniltype,
-		"retype":              a.retype,
-		"shortname":           a.shortname,
-		"convext":             a.convext,
-		"schema":              a.schemafn,
-		"colname":             a.colname,
-		"hascolumn":           a.hascolumn,
-		"hasfield":            a.hasfield,
-		"getstartcount":       a.getstartcount,
+		"colcount":               a.colcount,
+		"colnames":               a.colnames,
+		"colnamesmulti":          a.colnamesmulti,
+		"colnamesquery":          a.colnamesquery,
+		"colnamesquerymulti":     a.colnamesquerymulti,
+		"colnamesupdatequery":    a.colnamesupdatequery,
+		"colnamessliceforupdate": a.colnamessliceforupdate,
+		"colnamessliceforinsert": a.colnamessliceforinsert,
+		"colnamessliceall":       a.colnamessliceall,
+		"colprefixnames":         a.colprefixnames,
+		"colvals":                a.colvals,
+		"colvalsmulti":           a.colvalsmulti,
+		"updatefieldnames":       a.updatefieldnames,
+		"fieldnames":             a.fieldnames,
+		"fieldnamesmulti":        a.fieldnamesmulti,
+		"goparamlist":            a.goparamlist,
+		"reniltype":              a.reniltype,
+		"retype":                 a.retype,
+		"shortname":              a.shortname,
+		"convext":                a.convext,
+		"schema":                 a.schemafn,
+		"colname":                a.colname,
+		"hascolumn":              a.hascolumn,
+		"hasfield":               a.hasfield,
+		"getstartcount":          a.getstartcount,
 	}
 }
 
@@ -280,6 +284,76 @@ func (a *ArgType) colnamesupdatequery(fields []*Field, sep string, ignoreNames .
 			str = str + sep
 		}
 		str = str + a.colname(f.Col) + " = " + a.Loader.NthParam(i)
+		i++
+	}
+
+	return str
+}
+
+// colnamessliceall creates a slice of column names for update.
+// All column names are double-quoted.
+func (a *ArgType) colnamessliceall(fields []*Field) string {
+	str := ""
+	i := 0
+	for _, f := range fields {
+		str = str + fmt.Sprintf(`"%s"`, a.colname(f.Col))
+		if i < len(fields)-1 {
+			str += ", "
+		}
+		i++
+	}
+
+	return str
+}
+
+// colnamessliceforupdate creates a slice of column names for update.
+// All column names are double-quoted.
+func (a *ArgType) colnamessliceforupdate(fields []*Field, ignoreNames ...string) string {
+	ignore := map[string]bool{}
+	for _, n := range ignoreNames {
+		ignore[n] = true
+	}
+
+	str := ""
+	i := 0
+	for _, f := range fields {
+		if ignore[f.Name] {
+			continue
+		}
+
+		if f.IsIgnoredOnUpdate {
+			continue
+		}
+
+		str = str + fmt.Sprintf(`"%s"`, a.colname(f.Col))
+		if i < len(fields)-2 {
+			str += ", "
+		}
+		i++
+	}
+
+	return str
+}
+
+// colnamessliceforinsert creates a slice of colunm names for insert.
+// All column names are double-quoted.
+func (a *ArgType) colnamessliceforinsert(fields []*Field, ignoreNames ...string) string {
+	ignore := map[string]bool{}
+	for _, n := range ignoreNames {
+		ignore[n] = true
+	}
+
+	str := ""
+	i := 0
+	for _, f := range fields {
+		if ignore[f.Name] {
+			continue
+		}
+
+		str = str + fmt.Sprintf(`"%s"`, a.colname(f.Col))
+		if i < len(fields)-2 {
+			str += ", "
+		}
 		i++
 	}
 
