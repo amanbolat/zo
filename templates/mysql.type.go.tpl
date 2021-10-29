@@ -24,6 +24,12 @@ var {{ .Name }}ColsForUpdate = []string{ {{ colnamessliceforupdate .Fields .Prim
 // {{ .Name }}ColsForUpdate is an array of "{{ .Name }}" fields without primaryKey field.
 var {{ .Name }}ColsForInsert = []string{ {{ colnamessliceforinsert .Fields .PrimaryKey.Name }} }
 
+// AllValues returns all the fields values to be used
+// for SQL inserts. Pass as "item.InsertValues()..." with three dots
+func ({{ $short }} *{{ .Name }}) InsertValues() []interface{} {
+	return []interface{}{ {{ fieldnames .Fields $short }} }
+}
+
 // UpdateValues returns all the fields values to be used
 // for SQL inserts. Pass as "item.UpdateValues()..." with three dots
 func ({{ $short }} *{{ .Name }}) UpdateValues() []interface{} {
