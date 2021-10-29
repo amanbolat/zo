@@ -45,6 +45,7 @@ type ArgType struct {
 	IgnoreFields []string `arg:"--ignore-fields,help:fields to exclude from the generated Go code types"`
 
 	// IgnoreFieldsOnUpdate specified fields will be ignored during the update operation
+	// tbl_name[col1,col2] or *[col1,col2] for all tables
 	IgnoreFieldsOnUpdate []string `arg:"--ignore-fields-on-update,help:fields to exclude from the generated Go code for UPDATE operation"`
 
 	// ForeignKeyMode is the foreign key mode for generating foreign key names.
